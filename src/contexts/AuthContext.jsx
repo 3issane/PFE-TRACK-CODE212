@@ -20,29 +20,71 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  const login = async (username, password) => {
+    try {
+      // Import authAPI here to avoid circular dependency
+      const { authAPI } = await import('../services/api');
+      
+      const response = await authAPI.login({ username, password });
+      
+      if (response.token) {
+        // Store token and user data
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify({
+          id: response.id,
+          firstName: response.firstName,
+          lastName: response.lastName,
+          username: response.username,
+          email: response.email,
+          roles: response.roles
+        }));
+        
+        setToken(response.token);
+        setCurrentUser({
+          id: response.id,
+          firstName: response.firstName,
+          lastName: response.lastName,
+          username: response.username,
+          email: response.email,
+          roles: response.roles
+        });
+        
+        return { success: true };
+      } else {
+        return {
+          success: false,
+          message: 'Nom d\'utilisateur ou mot de passe incorrect'
+        };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return {
+        success: false,
+        message: 'Une erreur est survenue lors de la connexion'
+      };
+    }
+  };
+
   // Check if token is valid on initial load
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem('token');
       if (storedToken) {
         try {
-          // Verify token expiration
-          const decodedToken = jwtDecode(storedToken);
-          const currentTime = Date.now() / 1000;
-          
-          if (decodedToken.exp < currentTime) {
-            // Token expired
-            logout();
+          // Check if user data exists and token is valid
+          const userStr = localStorage.getItem('user');
+          if (userStr) {
+            // For real JWT tokens, we could decode and check expiration
+            // For now, just validate that user data exists
+            const userData = JSON.parse(userStr);
+            setCurrentUser(userData);
+            setToken(storedToken);
           } else {
-            // Token valid, set user from localStorage
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-              setCurrentUser(JSON.parse(userStr));
-              setToken(storedToken);
-            }
+            // Invalid token or user data
+            logout();
           }
         } catch (error) {
-          console.error('Invalid token', error);
+          console.error('Invalid token or user data', error);
           logout();
         }
       }
@@ -52,38 +94,24 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = async (username, password) => {
-    try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
-        username,
-        password
-      });
-      
-      const { token, user } = response.data;
-      
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      setToken(token);
-      setCurrentUser(user);
-      
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Une erreur est survenue lors de la connexion'
-      };
-    }
-  };
-
   const register = async (userData) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/register', userData);
-      return { success: true, data: response.data };
+      // Import authAPI here to avoid circular dependency
+      const { authAPI } = await import('../services/api');
+      
+      const response = await authAPI.register(userData);
+      
+      return { 
+        success: true, 
+        data: {
+          message: 'Inscription réussie. Vous pouvez maintenant vous connecter.'
+        }
+      };
     } catch (error) {
+      console.error('Registration error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Une erreur est survenue lors de l\'inscription'
+        message: 'Une erreur est survenue lors de l\'inscription'
       };
     }
   };

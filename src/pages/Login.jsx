@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import universityBg from '../assets/flat-university-background.png';
+import { testBackendConnection, testDataInitializerUsers } from '../utils/testBackend';
 
 const Login = () => {
   const [credentials, setCredentials] = useState({
@@ -31,8 +32,8 @@ const Login = () => {
       const result = await login(credentials.username, credentials.password);
       
       if (result.success) {
-        // Redirect to dashboard or home page
-        navigate('/');
+        // Redirect to student dashboard
+        navigate('/dashboard/student');
       } else {
         setError(result.message || 'Une erreur est survenue lors de la connexion');
       }
@@ -236,6 +237,33 @@ const Login = () => {
         </motion.div>
         
         {/* Trust indicators */}
+        {/* Development Helper Section */}
+        <motion.div 
+          className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.5 }}
+        >
+          <h3 className="text-sm font-medium text-blue-800 mb-2">Development Mode - Test Users</h3>
+          <div className="text-xs text-blue-600 space-y-1">
+            <div><strong>Student:</strong> username: student, password: student123</div>
+            <div><strong>Admin:</strong> username: admin, password: admin123</div>
+            <div><strong>Supervisor:</strong> username: supervisor, password: supervisor123</div>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              console.clear();
+              console.log('🔍 Testing backend connection...');
+              await testBackendConnection();
+              await testDataInitializerUsers();
+            }}
+            className="mt-3 w-full px-3 py-2 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            Test Backend Connection (Check Console)
+          </button>
+        </motion.div>
+
         <motion.div 
           className="mt-8 text-center"
           initial={{ opacity: 0, y: 20 }}
