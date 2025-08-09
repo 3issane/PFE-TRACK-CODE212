@@ -33,15 +33,6 @@ const StudentReports = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  
-  // Upload form state
-  const [uploadForm, setUploadForm] = useState({
-    title: '',
-    type: '',
-    description: '',
-    file: null
-  });
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -206,44 +197,17 @@ const StudentReports = () => {
   const totalReports = displayReports.length;
   const progressPercentage = (submittedReports / totalReports) * 100;
 
-  const handleUpload = async () => {
-    if (!uploadForm.title || !uploadForm.type || !uploadForm.file) {
-      alert('Please fill in all required fields and select a file.');
-      return;
-    }
-
-    setUploading(true);
+  const handleUpload = async (formData) => {
     try {
-      const formData = new FormData();
-      formData.append('title', uploadForm.title);
-      formData.append('type', uploadForm.type);
-      formData.append('description', uploadForm.description);
-      formData.append('file', uploadForm.file);
-      
-      const response = await reportsAPI.createWithFile(formData);
-      
-      if (response.ok) {
-        const updatedReports = await reportsAPI.getMy();
-        setReports(updatedReports);
-        setUploadDialogOpen(false);
-        setUploadForm({ title: '', type: '', description: '', file: null });
-        alert("Report uploaded successfully!");
-      } else {
-        throw new Error('Upload failed');
-      }
+      const response = await reportsAPI.create(formData);
+      const updatedReports = await reportsAPI.getMy();
+      setReports(updatedReports);
+      setUploadDialogOpen(false);
+      alert("Report uploaded successfully!");
     } catch (err) {
       alert("Failed to upload report. Please try again.");
       console.error('Error uploading report:', err);
-    } finally {
-      setUploading(false);
     }
-  };
-
-  const handleFormChange = (field, value) => {
-    setUploadForm(prev => ({
-      ...prev,
-      [field]: value
-    }));
   };
 
   const handleDownload = async (reportId) => {
@@ -377,45 +341,25 @@ const StudentReports = () => {
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="reportTitle">Report Title *</Label>
-                      <Input 
-                        id="reportTitle"
-                        placeholder="Enter report title"
-                        value={uploadForm.title}
-                        onChange={(e) => handleFormChange('title', e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="reportType">Report Type *</Label>
-                      <Select value={uploadForm.type} onValueChange={(value) => handleFormChange('type', value)}>
+                      <Label htmlFor="reportType">Report Type</Label>
+                      <Select>
                         <SelectTrigger id="reportType">
                           <SelectValue placeholder="Select report type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Proposal">Proposal</SelectItem>
-                          <SelectItem value="Literature Review">Literature Review</SelectItem>
-                          <SelectItem value="Progress Report">Progress Report</SelectItem>
-                          <SelectItem value="Documentation">Documentation</SelectItem>
-                          <SelectItem value="Final Report">Final Report</SelectItem>
-                          <SelectItem value="Presentation">Presentation</SelectItem>
+                          <SelectItem value="proposal">Proposal</SelectItem>
+                          <SelectItem value="literature">Literature Review</SelectItem>
+                          <SelectItem value="progress">Progress Report</SelectItem>
+                          <SelectItem value="documentation">Documentation</SelectItem>
+                          <SelectItem value="final">Final Report</SelectItem>
+                          <SelectItem value="presentation">Presentation</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="file">File *</Label>
-                      <Input 
-                        id="file" 
-                        type="file" 
-                        accept=".pdf,.doc,.docx,.ppt,.pptx"
-                        onChange={(e) => handleFormChange('file', e.target.files[0])}
-                      />
-                      {uploadForm.file && (
-                        <p className="text-sm text-muted-foreground">
-                          Selected: {uploadForm.file.name} ({(uploadForm.file.size / 1024 / 1024).toFixed(2)} MB)
-                        </p>
-                      )}
+                      <Label htmlFor="file">File</Label>
+                      <Input id="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" />
                     </div>
                     
                     <div className="space-y-2">
@@ -424,27 +368,17 @@ const StudentReports = () => {
                         id="description"
                         placeholder="Add any additional notes or comments..."
                         rows={3}
-                        value={uploadForm.description}
-                        onChange={(e) => handleFormChange('description', e.target.value)}
                       />
                     </div>
                     
                     <div className="flex space-x-2">
-                      <Button 
-                        onClick={handleUpload} 
-                        className="flex-1"
-                        disabled={uploading || !uploadForm.title || !uploadForm.type || !uploadForm.file}
-                      >
+                      <Button onClick={handleUpload} className="flex-1">
                         <Upload className="w-4 h-4 mr-2" />
-                        {uploading ? 'Uploading...' : 'Upload Report'}
+                        Upload Report
                       </Button>
                       <Button 
                         variant="outline" 
-                        onClick={() => {
-                          setUploadDialogOpen(false);
-                          setUploadForm({ title: '', type: '', description: '', file: null });
-                        }}
-                        disabled={uploading}
+                        onClick={() => setUploadDialogOpen(false)}
                       >
                         Cancel
                       </Button>
@@ -707,8 +641,8 @@ const StudentReports = () => {
                 </CardContent>
               </Card>
             ))}
-          </div>
-          )}
+           </div>
+           )}
 
           {filteredReports.length === 0 && (
             <div className="text-center py-12">

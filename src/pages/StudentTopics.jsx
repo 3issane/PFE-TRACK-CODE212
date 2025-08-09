@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -22,26 +21,14 @@ import {
   Cpu,
   Database,
   Globe,
-  Smartphone,
-  // Add other icons as needed
+  Smartphone
 } from 'lucide-react';
-
-// Mapping of icon names (strings) to their actual Lucide React components
-const iconMap = {
-  Brain: Brain,
-  Cpu: Cpu,
-  Database: Database,
-  Globe: Globe,
-  Smartphone: Smartphone,
-  // Add other mappings for icons used in your API data
-};
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Textarea } from '../components/ui/textarea';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { topicsAPI } from '../services/api';
 
 const StudentTopics = () => {
-  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
@@ -50,6 +37,23 @@ const StudentTopics = () => {
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        setLoading(true);
+        const data = await topicsAPI.getAll();
+        setTopics(data);
+      } catch (err) {
+        setError('Failed to load topics');
+        console.error('Error fetching topics:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopics();
+  }, []);
 
   const mockTopics = [
     {
@@ -168,47 +172,6 @@ const StudentTopics = () => {
     }
   ];
 
-  useEffect(() => {
-    const fetchTopics = async () => {
-      if (!currentUser) {
-        setError('Please log in to view topics.');
-        setLoading(false);
-        const mappedMockTopics = mockTopics.map(topic => ({
-          ...topic,
-          icon: iconMap[topic.icon] || Brain
-        }));
-        setTopics(mappedMockTopics);
-        return;
-      }
-      try {
-        setLoading(true);
-        console.log('Fetching topics from API...');
-        const data = await topicsAPI.getAll();
-        console.log('Topics fetched successfully:', data);
-        const mappedTopics = data.map(topic => ({
-          ...topic,
-          icon: iconMap[topic.icon] || Brain // Default to Brain if icon not found
-        }));
-        setTopics(mappedTopics);
-      } catch (err) {
-        setError('Failed to load topics - using offline data');
-        console.error('Error fetching topics:', err);
-        console.log('Falling back to mock data');
-        
-        // Set mock data when API fails
-        const mappedMockTopics = mockTopics.map(topic => ({
-          ...topic,
-          icon: iconMap[topic.icon] || Brain
-        }));
-        setTopics(mappedMockTopics);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTopics();
-  }, []);
-
   // Use API data if available, otherwise fall back to mock data
   const displayTopics = topics.length > 0 ? topics : mockTopics;
 
@@ -221,10 +184,10 @@ const StudentTopics = () => {
   ];
 
   const filteredTopics = displayTopics.filter(topic => {
-    const matchesSearch = (topic.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (topic.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (topic.supervisor || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (topic.skills || []).some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         topic.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         topic.supervisor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         topic.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesDepartment = selectedDepartment === "all" || topic.department === selectedDepartment;
     const matchesType = selectedType === "all" || topic.type === selectedType;
@@ -283,7 +246,7 @@ const StudentTopics = () => {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-foreground">PFE Topics</h1>
           <p className="text-muted-foreground">
-            Browse and apply for available PFE topics from various departments.
+            Browse and apply to available final year project topics from various departments.
           </p>
         </div>
 
@@ -358,15 +321,13 @@ const StudentTopics = () => {
         <div className="space-y-4">
           {loading && (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">Loading topics...</p>
             </div>
           )}
           
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-600 font-medium">Error: {error}</p>
-              <p className="text-red-500 text-sm mt-1">Check the browser console for more details.</p>
+            <div className="text-center py-8">
+              <p className="text-red-600">{error}</p>
               <Button 
                 variant="outline" 
                 onClick={() => window.location.reload()}
@@ -408,7 +369,7 @@ const StudentTopics = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3">
                       <div className={`p-2 rounded-lg ${topic.color}`}>
-                        {React.createElement(topic.icon, { className: "w-5 h-5" })}
+                        <topic.icon className="w-5 h-5" />
                       </div>
                       <div className="flex-1">
                         <CardTitle className="text-lg leading-tight">{topic.title}</CardTitle>
@@ -467,14 +428,14 @@ const StudentTopics = () => {
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Required Skills:</p>
                     <div className="flex flex-wrap gap-1">
-                      {(topic.skills || []).slice(0, 4).map((skill, index) => (
+                      {topic.skills.slice(0, 4).map((skill, index) => (
                         <Badge key={index} variant="secondary" className="text-xs">
                           {skill}
                         </Badge>
                       ))}
-                      {(topic.skills || []).length > 4 && (
+                      {topic.skills.length > 4 && (
                         <Badge variant="secondary" className="text-xs">
-                          +{(topic.skills || []).length - 4} more
+                          +{topic.skills.length - 4} more
                         </Badge>
                       )}
                     </div>
@@ -510,8 +471,8 @@ const StudentTopics = () => {
                             <DialogHeader>
                               <DialogTitle className="flex items-center space-x-2">
                                 <div className={`p-2 rounded-lg ${selectedTopic.color}`}>
-                  {selectedTopic.icon && React.createElement(selectedTopic.icon, { className: "w-5 h-5" })}
-                </div>
+                                  <selectedTopic.icon className="w-5 h-5" />
+                                </div>
                                 <span>{selectedTopic.title}</span>
                               </DialogTitle>
                               <DialogDescription>
@@ -549,7 +510,7 @@ const StudentTopics = () => {
                               <div>
                                 <p className="font-medium mb-2">Required Skills</p>
                                 <div className="flex flex-wrap gap-2">
-                                  {(selectedTopic.skills || []).map((skill, index) => (
+                                  {selectedTopic.skills.map((skill, index) => (
                                     <Badge key={index} variant="secondary">
                                       {skill}
                                     </Badge>
@@ -600,7 +561,7 @@ const StudentTopics = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            ))}))}
           </div>
           )}
 

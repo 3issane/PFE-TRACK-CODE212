@@ -32,46 +32,8 @@ const Login = () => {
       const result = await login(credentials.username, credentials.password);
       
       if (result.success) {
-        // Wait a moment for the token to be properly set in localStorage and axios headers
-        setTimeout(async () => {
-          try {
-            // Fetch fresh user profile data from database to get current roles
-            const { userAPI } = await import('../services/api');
-            const userProfile = await userAPI.getProfile();
-            
-            console.log('User profile from database:', userProfile);
-            console.log('User roles from database:', userProfile.roles);
-            
-            const isAdmin = userProfile.roles && userProfile.roles.some(role => {
-              console.log('Checking role:', role);
-              return role.name === 'ROLE_ADMIN';
-            });
-            
-            console.log('Is admin?', isAdmin);
-            
-            if (isAdmin) {
-              console.log('Redirecting to admin dashboard');
-              navigate('/dashboard/admin');
-            } else {
-              console.log('Redirecting to student dashboard');
-              navigate('/dashboard/student');
-            }
-          } catch (profileError) {
-            console.error('Error fetching user profile:', profileError);
-            // Fallback: check localStorage if API call fails
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-              const userData = JSON.parse(userStr);
-              console.log('Fallback - User data from localStorage:', userData);
-              const isAdmin = userData.roles && userData.roles.some(role => role.name === 'ROLE_ADMIN');
-              console.log('Fallback - Is admin?', isAdmin);
-              navigate(isAdmin ? '/dashboard/admin' : '/dashboard/student');
-            } else {
-              console.log('Fallback - No user data, redirecting to student dashboard');
-              navigate('/dashboard/student');
-            }
-          }
-        }, 100);
+        // Redirect to student dashboard
+        navigate('/dashboard/student');
       } else {
         setError(result.message || 'Une erreur est survenue lors de la connexion');
       }
@@ -275,17 +237,6 @@ const Login = () => {
         </motion.div>
         
         {/* Trust indicators */}
-        {/* Development Helper Section */}
-        <motion.div 
-          className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
-        >
-         
-          
-        </motion.div>
-
         <motion.div 
           className="mt-8 text-center"
           initial={{ opacity: 0, y: 20 }}

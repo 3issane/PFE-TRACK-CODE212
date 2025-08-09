@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -141,61 +140,6 @@ public class ReportController {
         return ResponseEntity.ok(updatedReport);
     }
 
-    @PostMapping("/upload")
-    @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<?> createReportWithFile(@RequestParam("title") String title,
-                                                  @RequestParam("type") String type,
-                                                  @RequestParam("description") String description,
-                                                  @RequestParam("file") MultipartFile file,
-                                                  Authentication authentication) {
-        try {
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            Optional<User> userOpt = userRepository.findById(userDetails.getId());
-            
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            // Create report first
-            Report report = new Report();
-            report.setTitle(title);
-            report.setType(type);
-            report.setDescription(description);
-            report.setStudent(userOpt.get());
-            report.setStatus("Draft");
-            
-            // Create type-specific upload directory
-            Path typeDir = Paths.get(uploadDir, type.replaceAll("[^a-zA-Z0-9\\s]", ""));
-            if (!Files.exists(typeDir)) {
-                Files.createDirectories(typeDir);
-            }
-            
-            // Generate unique filename
-            String originalFilename = file.getOriginalFilename();
-            String fileExtension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
-            String uniqueFilename = UUID.randomUUID().toString() + "_" + originalFilename;
-            
-            // Save file in type-specific directory
-            Path filePath = typeDir.resolve(uniqueFilename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            
-            // Update report with file information
-            report.setFileName(originalFilename);
-            report.setFilePath(filePath.toString());
-            report.setFileSize(file.getSize());
-            
-            Report savedReport = reportRepository.save(report);
-            
-            return ResponseEntity.ok(savedReport);
-            
-        } catch (IOException e) {
-            return ResponseEntity.internalServerError().body("Failed to upload file: " + e.getMessage());
-        }
-    }
-
     @PostMapping("/{id}/upload")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> uploadReportFile(@PathVariable Long id,
@@ -215,11 +159,10 @@ public class ReportController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
             
-            // Create type-specific upload directory
-            String reportType = report.getType() != null ? report.getType() : "General";
-            Path typeDir = Paths.get(uploadDir, reportType.replaceAll("[^a-zA-Z0-9\\s]", ""));
-            if (!Files.exists(typeDir)) {
-                Files.createDirectories(typeDir);
+            // Create upload directory if it doesn't exist
+            Path uploadPath = Paths.get(uploadDir);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
             }
             
             // Generate unique filename
@@ -228,10 +171,10 @@ public class ReportController {
             if (originalFilename != null && originalFilename.contains(".")) {
                 fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
             }
-            String uniqueFilename = UUID.randomUUID().toString() + "_" + originalFilename;
+            String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
             
-            // Save file in type-specific directory
-            Path filePath = typeDir.resolve(uniqueFilename);
+            // Save file
+            Path filePath = uploadPath.resolve(uniqueFilename);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             
             // Update report with file information

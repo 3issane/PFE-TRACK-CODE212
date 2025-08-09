@@ -50,65 +50,70 @@ const AdminDashboard = () => {
       setLoading(true);
       console.log('Current user:', localStorage.getItem('user'));
       console.log('Auth token:', localStorage.getItem('token'));
+    
+    // Fetch dashboard statistics with proper error handling
+    const [usersResponse, projectsResponse] = await Promise.all([
+      api.get('/users').catch(err => {
+        console.error('Users API error:', err);
+        return [];
+      }),
+      api.get('/projects').catch(err => {
+        console.error('Projects API error:', err);
+        return [];
+      })
+    ]);
 
-      const [usersResponse, projectsResponse] = await Promise.all([
-        api.get('/users').catch(err => {
-          console.error('Users API error:', err);
-          return { data: [] };
-        }),
-        api.get('/projects').catch(err => {
-          console.error('Projects API error:', err);
-          return { data: [] };
-        })
-      ]);
+    const users = Array.isArray(usersResponse) ? usersResponse : [];
+    const projects = Array.isArray(projectsResponse) ? projectsResponse : [];
 
-      const users = Array.isArray(usersResponse.data) ? usersResponse.data : [];
-      const projects = Array.isArray(projectsResponse.data) ? projectsResponse.data : [];
+    console.log('Fetched users:', users); // Debug log
+    console.log('Fetched projects:', projects); // Debug log
 
-      console.log('Fetched users:', users);
-      console.log('Fetched projects:', projects);
+    // Calculate statistics
+    const totalUsers = users.length;
+    const totalStudents = users.filter(user => 
+      user.roles?.some(role => role.name === 'ROLE_STUDENT')
+    ).length;
+    const totalProfessors = users.filter(user => 
+      user.roles?.some(role => role.name === 'ROLE_PROFESSOR')
+    ).length;
+    
+    const totalProjects = projects.length;
+    const activeProjects = projects.filter(p => p.status === 'ACTIVE' || p.status === 'IN_PROGRESS').length;
+    const completedProjects = projects.filter(p => p.status === 'COMPLETED').length;
+    const pendingReports = projects.filter(p => p.status === 'PENDING_REVIEW').length;
 
-      const totalUsers = users.length;
-      const totalStudents = users.filter(user =>
-        user.roles?.some(role => role.name === 'ROLE_STUDENT')
-      ).length;
-      const totalProfessors = users.filter(user =>
-        user.roles?.some(role => role.name === 'ROLE_PROFESSOR')
-      ).length;
+    setStats({
+      totalUsers,
+      totalStudents,
+      totalProfessors,
+      totalProjects,
+      activeProjects,
+      completedProjects,
+      pendingReports,
+      systemHealth: 'Good'
+    });
 
-      const totalProjects = projects.length;
-      const activeProjects = projects.filter(p => p.status === 'ACTIVE' || p.status === 'IN_PROGRESS').length;
-      const completedProjects = projects.filter(p => p.status === 'COMPLETED').length;
-      const pendingReports = projects.filter(p => p.status === 'PENDING_REVIEW').length;
+    // TODO: Fetch real recent activities from API
+    setRecentActivities([]);
 
-      setStats({
-        totalUsers,
-        totalStudents,
-        totalProfessors,
-        totalProjects,
-        activeProjects,
-        completedProjects,
-        pendingReports,
-        systemHealth: 'Good'
-      });
-
-      setRecentActivities([]);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      setStats({
-        totalUsers: 0,
-        totalStudents: 0,
-        totalProfessors: 0,
-        totalProjects: 0,
-        activeProjects: 0,
-        completedProjects: 0,
-        pendingReports: 0,
-        systemHealth: 'Error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    // Set default values in case of error
+    setStats({
+      totalUsers: 0,
+      totalStudents: 0,
+      totalProfessors: 0,
+      totalProjects: 0,
+      activeProjects: 0,
+      completedProjects: 0,
+      pendingReports: 0,
+      systemHealth: 'Error'
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getStatusIcon = (status) => {
     switch (status) {

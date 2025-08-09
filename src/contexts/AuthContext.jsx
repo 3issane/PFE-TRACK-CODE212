@@ -20,6 +20,32 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  // Check if token is valid on initial load
+  useEffect(() => {
+    const initAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        try {
+          // For mock tokens, just check if user data exists
+          const userStr = localStorage.getItem('user');
+          if (userStr && storedToken.startsWith('mock-jwt-token-')) {
+            setCurrentUser(JSON.parse(userStr));
+            setToken(storedToken);
+          } else {
+            // Invalid token or user data
+            logout();
+          }
+        } catch (error) {
+          console.error('Invalid token or user data', error);
+          logout();
+        }
+      }
+      setLoading(false);
+    };
+
+    initAuth();
+  }, []);
+
   const login = async (username, password) => {
     try {
       // Import authAPI here to avoid circular dependency
@@ -27,27 +53,13 @@ export const AuthProvider = ({ children }) => {
       
       const response = await authAPI.login({ username, password });
       
-      if (response.token) {
+      if (response.accessToken) {
         // Store token and user data
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify({
-          id: response.id,
-          firstName: response.firstName,
-          lastName: response.lastName,
-          username: response.username,
-          email: response.email,
-          roles: response.roles
-        }));
+        localStorage.setItem('token', response.accessToken);
+        localStorage.setItem('user', JSON.stringify(response.user));
         
-        setToken(response.token);
-        setCurrentUser({
-          id: response.id,
-          firstName: response.firstName,
-          lastName: response.lastName,
-          username: response.username,
-          email: response.email,
-          roles: response.roles
-        });
+        setToken(response.accessToken);
+        setCurrentUser(response.user);
         
         return { success: true };
       } else {
@@ -64,35 +76,6 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
-
-  // Check if token is valid on initial load
-  useEffect(() => {
-    const initAuth = async () => {
-      const storedToken = localStorage.getItem('token');
-      if (storedToken) {
-        try {
-          // Check if user data exists and token is valid
-          const userStr = localStorage.getItem('user');
-          if (userStr) {
-            // For real JWT tokens, we could decode and check expiration
-            // For now, just validate that user data exists
-            const userData = JSON.parse(userStr);
-            setCurrentUser(userData);
-            setToken(storedToken);
-          } else {
-            // Invalid token or user data
-            logout();
-          }
-        } catch (error) {
-          console.error('Invalid token or user data', error);
-          logout();
-        }
-      }
-      setLoading(false);
-    };
-
-    initAuth();
-  }, []);
 
   const register = async (userData) => {
     try {
@@ -136,7 +119,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
