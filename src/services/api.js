@@ -1,40 +1,74 @@
+import axios from 'axios';
+
 const API_BASE_URL = 'http://localhost:8080/api';
+
+
+// Create axios instance
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Create axios instance for public requests
+const axiosPublicInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
 
 // Get auth token from localStorage
 const getAuthToken = () => {
   return localStorage.getItem('token');
 };
 
-// Create headers with auth token
-const getAuthHeaders = () => {
-  const token = getAuthToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
-  };
-};
+// Request interceptor to add auth token
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response.data;
+  },
+  (error) => {
+    console.error('API request failed:', error);
+    throw error;
+  }
+);
+
+axiosPublicInstance.interceptors.response.use(
+  (response) => {
+    return response.data;
+  },
+  (error) => {
+    console.error('API request failed:', error);
+    throw error;
+  }
+);
 
 // Generic API request function
 export const apiRequest = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const config = {
-    headers: getAuthHeaders(),
-    ...options
-  };
-
   try {
-    const response = await fetch(url, config);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return await response.json();
-    }
-    
-    return response;
+    const { method = 'GET', data, ...config } = options;
+    return await axiosInstance({
+      url: endpoint,
+      method,
+      data,
+      ...config
+    });
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
@@ -43,27 +77,14 @@ export const apiRequest = async (endpoint, options = {}) => {
 
 // API request function without authentication (for public endpoints)
 export const apiRequestPublic = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const config = {
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    ...options
-  };
-
   try {
-    const response = await fetch(url, config);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return await response.json();
-    }
-    
-    return response;
+    const { method = 'GET', data, ...config } = options;
+    return await axiosPublicInstance({
+      url: endpoint,
+      method,
+      data,
+      ...config
+    });
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
@@ -75,14 +96,14 @@ const authAPI = {
   login: async (credentials) => {
     return apiRequestPublic('/auth/login', {
       method: 'POST',
-      body: JSON.stringify(credentials)
+      data: credentials
     });
   },
   
   register: async (userData) => {
     return apiRequestPublic('/auth/register', {
       method: 'POST',
-      body: JSON.stringify(userData)
+      data: userData
     });
   }
 };
@@ -112,14 +133,14 @@ const topicsAPI = {
   create: async (topicData) => {
     return apiRequest('/topics', {
       method: 'POST',
-      body: JSON.stringify(topicData)
+      data: topicData
     });
   },
   
   update: async (id, topicData) => {
     return apiRequest(`/topics/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(topicData)
+      data: topicData
     });
   },
   
@@ -132,7 +153,7 @@ const topicsAPI = {
   apply: async (id, motivation) => {
     return apiRequest(`/topics/${id}/apply`, {
       method: 'POST',
-      body: JSON.stringify(motivation)
+      data: motivation
     });
   },
   
@@ -174,26 +195,25 @@ const reportsAPI = {
   create: async (reportData) => {
     return apiRequest('/reports', {
       method: 'POST',
-      body: JSON.stringify(reportData)
+      data: reportData
     });
   },
 
   createWithFile: async (formData) => {
-    const token = getAuthToken();
-    return fetch(`${API_BASE_URL}/reports/upload`, {
+    return axiosInstance({
+      url: '/reports/upload',
       method: 'POST',
+      data: formData,
       headers: {
-        ...(token && { 'Authorization': `Bearer ${token}` })
-        // Don't set Content-Type for FormData, let browser set it with boundary
-      },
-      body: formData
+        'Content-Type': 'multipart/form-data'
+      }
     });
   },
   
   update: async (id, reportData) => {
     return apiRequest(`/reports/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(reportData)
+      data: reportData
     });
   },
   
@@ -207,23 +227,21 @@ const reportsAPI = {
     const formData = new FormData();
     formData.append('file', file);
     
-    const token = getAuthToken();
-    return fetch(`${API_BASE_URL}/reports/${id}/upload`, {
+    return axiosInstance({
+      url: `/reports/${id}/upload`,
       method: 'POST',
+      data: formData,
       headers: {
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      },
-      body: formData
+        'Content-Type': 'multipart/form-data'
+      }
     });
   },
   
   downloadFile: async (id) => {
-    const token = getAuthToken();
-    return fetch(`${API_BASE_URL}/reports/${id}/download`, {
+    return axiosInstance({
+      url: `/reports/${id}/download`,
       method: 'GET',
-      headers: {
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      }
+      responseType: 'blob'
     });
   },
   
@@ -237,13 +255,13 @@ const reportsAPI = {
 // User API
 const userAPI = {
   getProfile: async () => {
-    return apiRequest('/user/profile');
+    return apiRequest('/users/me');
   },
   
   updateProfile: async (userData) => {
-    return apiRequest('/user/profile', {
+    return apiRequest('/users/me', {
       method: 'PUT',
-      body: JSON.stringify(userData)
+      data: userData
     });
   }
 };
@@ -277,14 +295,14 @@ const api = {
   post: async (endpoint, data) => {
     return apiRequest(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data)
+      data: data
     });
   },
 
   put: async (endpoint, data) => {
     return apiRequest(endpoint, {
       method: 'PUT',
-      body: JSON.stringify(data)
+      data: data
     });
   },
 
@@ -302,7 +320,7 @@ const publicApi = {
   post: async (endpoint, data) => {
     return apiRequestPublic(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data)
+      data: data
     });
   }
 };

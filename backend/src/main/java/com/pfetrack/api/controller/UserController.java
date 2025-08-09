@@ -6,13 +6,14 @@ import com.pfetrack.api.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"}, maxAge = 3600)
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
 
     @Autowired
@@ -22,6 +23,13 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public List<User> getAllUsers() {
         return userService.getAllUsers();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<User> getCurrentUser(Authentication authentication) {
+        String username = authentication.getName();
+        User user = userService.getUserByUsername(username);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/{id}")

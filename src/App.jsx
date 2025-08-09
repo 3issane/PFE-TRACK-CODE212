@@ -12,6 +12,11 @@ import StudentGrades from './pages/StudentGrades'
 import StudentSettings from './pages/StudentSettings'
 import StudentProfile from './pages/StudentProfile'
 import StudentSchedule from './pages/StudentSchedule'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminUsers from './pages/AdminUsers'
+import AdminAnalytics from './pages/AdminAnalytics'
+import AdminProjects from './pages/AdminProjects'
+import AdminSchedules from './pages/AdminSchedules'
 import PrivateRoute from './components/PrivateRoute'
 import { AuthProvider } from './contexts/AuthContext'
 
@@ -27,6 +32,7 @@ function App() {
             
             {/* Protected routes */}
             <Route element={<PrivateRoute />}>
+              {/* Student routes */}
               <Route path="/dashboard/student" element={<StudentDashboard />} />
               <Route path="/dashboard/student/topics" element={<StudentTopics />} />
               <Route path="/dashboard/student/reports" element={<StudentReports />} />
@@ -34,6 +40,13 @@ function App() {
               <Route path="/dashboard/student/schedule" element={<StudentSchedule />} />
               <Route path="/dashboard/student/profile" element={<StudentProfile />} />
               <Route path="/dashboard/student/settings" element={<StudentSettings />} />
+              
+              {/* Admin routes */}
+              <Route path="/dashboard/admin" element={<AdminDashboard />} />
+              <Route path="/dashboard/admin/users" element={<AdminUsers />} />
+              <Route path="/dashboard/admin/analytics" element={<AdminAnalytics />} />
+              <Route path="/dashboard/admin/projects" element={<AdminProjects />} />
+              <Route path="/dashboard/admin/schedules" element={<AdminSchedules />} />
             </Route>
           </Routes>
         </div>

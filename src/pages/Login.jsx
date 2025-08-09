@@ -32,8 +32,46 @@ const Login = () => {
       const result = await login(credentials.username, credentials.password);
       
       if (result.success) {
-        // Redirect to student dashboard
-        navigate('/dashboard/student');
+        // Wait a moment for the token to be properly set in localStorage and axios headers
+        setTimeout(async () => {
+          try {
+            // Fetch fresh user profile data from database to get current roles
+            const { userAPI } = await import('../services/api');
+            const userProfile = await userAPI.getProfile();
+            
+            console.log('User profile from database:', userProfile);
+            console.log('User roles from database:', userProfile.roles);
+            
+            const isAdmin = userProfile.roles && userProfile.roles.some(role => {
+              console.log('Checking role:', role);
+              return role.name === 'ROLE_ADMIN';
+            });
+            
+            console.log('Is admin?', isAdmin);
+            
+            if (isAdmin) {
+              console.log('Redirecting to admin dashboard');
+              navigate('/dashboard/admin');
+            } else {
+              console.log('Redirecting to student dashboard');
+              navigate('/dashboard/student');
+            }
+          } catch (profileError) {
+            console.error('Error fetching user profile:', profileError);
+            // Fallback: check localStorage if API call fails
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+              const userData = JSON.parse(userStr);
+              console.log('Fallback - User data from localStorage:', userData);
+              const isAdmin = userData.roles && userData.roles.some(role => role.name === 'ROLE_ADMIN');
+              console.log('Fallback - Is admin?', isAdmin);
+              navigate(isAdmin ? '/dashboard/admin' : '/dashboard/student');
+            } else {
+              console.log('Fallback - No user data, redirecting to student dashboard');
+              navigate('/dashboard/student');
+            }
+          }
+        }, 100);
       } else {
         setError(result.message || 'Une erreur est survenue lors de la connexion');
       }
@@ -244,24 +282,8 @@ const Login = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.5 }}
         >
-          <h3 className="text-sm font-medium text-blue-800 mb-2">Development Mode - Test Users</h3>
-          <div className="text-xs text-blue-600 space-y-1">
-            <div><strong>Student:</strong> username: student, password: student123</div>
-            <div><strong>Admin:</strong> username: admin, password: admin123</div>
-            <div><strong>Supervisor:</strong> username: supervisor, password: supervisor123</div>
-          </div>
-          <button
-            type="button"
-            onClick={async () => {
-              console.clear();
-              console.log('🔍 Testing backend connection...');
-              await testBackendConnection();
-              await testDataInitializerUsers();
-            }}
-            className="mt-3 w-full px-3 py-2 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          >
-            Test Backend Connection (Check Console)
-          </button>
+         
+          
         </motion.div>
 
         <motion.div 
