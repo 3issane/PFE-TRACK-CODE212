@@ -43,4 +43,7 @@ public class Report {
     private StudentTopic studentTopic;
 
     private String fileName;
+
+    // Actual stored file name on disk (uploads directory). May differ from original to avoid collisions.
+    private String storedFileName;
 }

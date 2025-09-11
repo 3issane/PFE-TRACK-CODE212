@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { getRole, authHeader } from '@/auth';
-import { FileText, Calendar, Clock, CheckCircle, AlertCircle, XCircle, Plus, MessageSquare } from 'lucide-react';
+import { FileText, Calendar, Clock, CheckCircle, AlertCircle, XCircle, Plus, MessageSquare, Download } from 'lucide-react';
 
 // Helper mapping for status (backend may return uppercase like SUBMITTED)
 const normalize = (s) => (s || '').toUpperCase();
@@ -97,22 +97,21 @@ const Reports = () => {
 
   const submitUpload = async (e) => {
     e.preventDefault();
-  if (!uploadForm.title || !uploadForm.type) return;
+    if (!uploadForm.title || !uploadForm.type) return;
     setUploadSubmitting(true);
     try {
-      const body = {
-        title: uploadForm.title,
-        type: uploadForm.type,
-        fileName: uploadForm.file ? uploadForm.file.name : uploadForm.title + '.pdf',
-        size: uploadForm.file ? uploadForm.file.size : 0
-        // supervisor inferred via studentTopic on backend
-      };
-  const res = await fetch(`${API_BASE}/api/reports/student`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader() }, body: JSON.stringify(body) });
-      if (res.ok) {
-        setUploadOpen(false);
-  setUploadForm({ title: '', type: '', file: null });
-        fetchReports();
+      let res;
+      if (uploadForm.file) {
+        const fd = new FormData();
+        fd.append('title', uploadForm.title);
+        fd.append('type', uploadForm.type);
+        fd.append('file', uploadForm.file);
+        res = await fetch(`${API_BASE}/api/reports/student/upload`, { method: 'POST', headers: { ...authHeader() }, body: fd });
+      } else {
+        const body = { title: uploadForm.title, type: uploadForm.type, fileName: uploadForm.title + '.pdf', size: 0 };
+        res = await fetch(`${API_BASE}/api/reports/student`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader() }, body: JSON.stringify(body) });
       }
+      if (res.ok) { setUploadOpen(false); setUploadForm({ title: '', type: '', file: null }); fetchReports(); }
     } finally { setUploadSubmitting(false); }
   };
 
@@ -125,6 +124,16 @@ const Reports = () => {
   const res = await fetch(`${API_BASE}/api/reports/${feedbackOpenId}/feedback`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...authHeader() }, body: JSON.stringify({ feedback: feedbackText }) });
       if (res.ok) { setFeedbackOpenId(null); fetchReports(); }
     } finally { setFeedbackSubmitting(false); }
+  };
+
+  const downloadFile = async (id, original) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/reports/${id}/download`, { headers: { ...authHeader() } });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = original || 'report'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    } catch {}
   };
 
   return (
@@ -282,7 +291,10 @@ const Reports = () => {
                   )}
                   {role === 'PROFESSOR' && (
                     <div className='flex justify-end'>
-                      <Button size='sm' variant='outline' onClick={()=>openFeedback(r)}><MessageSquare className='w-4 h-4 mr-1' />{r.feedback ? 'Edit Feedback' : 'Add Feedback'}</Button>
+                      <div className='flex gap-2'>
+                        {r.storedFileName && <Button size='sm' variant='outline' onClick={()=>downloadFile(r.id, r.fileName)}><Download className='w-4 h-4 mr-1'/>Download</Button>}
+                        <Button size='sm' variant='outline' onClick={()=>openFeedback(r)}><MessageSquare className='w-4 h-4 mr-1' />{r.feedback ? 'Edit Feedback' : 'Add Feedback'}</Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
