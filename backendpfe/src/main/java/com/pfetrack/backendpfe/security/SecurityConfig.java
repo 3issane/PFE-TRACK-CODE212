@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/login", "/api/auth/signup", "/h2-console/**").permitAll()
+            .requestMatchers("/api/auth/login", "/api/auth/signup", "/api/auth/google", "/api/auth/forgot-password", "/api/auth/forgot-password/**", "/api/auth/email-exists", "/api/auth/google-client-id", "/h2-console/**", "/api/ai/gemini/status").permitAll()
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // allow preflight without auth
             .anyRequest().authenticated()
         )
@@ -73,8 +73,9 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+    CorsConfiguration configuration = new CorsConfiguration();
+    // Allow both localhost and 127.0.0.1 for Vite dev server (some browsers / setups may use either)
+    configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
     configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
     configuration.setAllowedHeaders(List.of("Authorization","Content-Type","Accept","Origin","X-Requested-With"));
         configuration.setAllowCredentials(true);

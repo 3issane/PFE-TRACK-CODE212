@@ -43,6 +43,7 @@ const studentNav = [
   { title: "Dashboard", url: "/student/dashboard", icon: IconDashboard },
   { title: "Topics", url: "/student/topics", icon: IconListDetails },
   { title: "Reports", url: "/student/reports", icon: IconReport },
+  { title: "Report Check", url: "/student/report-check", icon: IconReport },
   { title: "Schedule", url: "/student/schedule", icon: IconCalendar },
   { title: "Profile", url: "/student/profile", icon: IconUserCircle },
 ]

@@ -179,9 +179,9 @@ const Reports = () => {
                     </div>
                     {/* Supervisor derived from topic assignment; field removed */}
                     <div className='space-y-1'>
-                      <Label>File (placeholder)</Label>
-                      <Input type='file' onChange={e=>setUploadForm(f=>({...f,file:e.target.files?.[0]||null}))} />
-                      <p className='text-xs text-muted-foreground'>Actual file storage not implemented yet.</p>
+                      <Label>File (PDF/DOCX optional)</Label>
+                      <Input type='file' accept='.pdf,.doc,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword' onChange={e=>setUploadForm(f=>({...f,file:e.target.files?.[0]||null}))} />
+                      <p className='text-xs text-muted-foreground'>Accepted: PDF or DOCX. Leave empty to submit metadata only.</p>
                     </div>
                     <div className='flex justify-end gap-2'>
                       <Button type='button' variant='outline' onClick={()=>setUploadOpen(false)}>Cancel</Button>
@@ -289,11 +289,19 @@ const Reports = () => {
                       <div className='p-3 bg-muted rounded-lg text-sm whitespace-pre-wrap'>{r.feedback}</div>
                     </div>
                   )}
-                  {role === 'PROFESSOR' && (
+                  {(role === 'PROFESSOR' || role === 'ADMIN') && (
                     <div className='flex justify-end'>
                       <div className='flex gap-2'>
-                        {r.storedFileName && <Button size='sm' variant='outline' onClick={()=>downloadFile(r.id, r.fileName)}><Download className='w-4 h-4 mr-1'/>Download</Button>}
-                        <Button size='sm' variant='outline' onClick={()=>openFeedback(r)}><MessageSquare className='w-4 h-4 mr-1' />{r.feedback ? 'Edit Feedback' : 'Add Feedback'}</Button>
+                        {r.storedFileName && (
+                          <Button size='sm' variant='outline' onClick={()=>downloadFile(r.id, r.fileName)}>
+                            <Download className='w-4 h-4 mr-1'/>Download
+                          </Button>
+                        )}
+                        {role === 'PROFESSOR' && (
+                          <Button size='sm' variant='outline' onClick={()=>openFeedback(r)}>
+                            <MessageSquare className='w-4 h-4 mr-1' />{r.feedback ? 'Edit Feedback' : 'Add Feedback'}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}

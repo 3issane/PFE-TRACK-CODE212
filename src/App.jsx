@@ -3,12 +3,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
 import PrivateRoute from "./routes/PrivateRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 import StudentDashboard from "./pages/student/Dashboard.jsx";
 import StudentTopics from "./pages/student/Topics.jsx";
 import StudentReports from "./pages/student/Reports.jsx";
 import StudentSchedule from "./pages/student/Schedule.jsx";
+import StudentReportCheck from "./pages/student/ReportCheck.jsx";
 import Dashboard from "./pages/admin/Dashboard";
 import ProfessorDash from "./pages/professor/Dashboard";
 import AdminTopics from "./pages/admin/Topics";
@@ -29,6 +31,7 @@ const App = () => {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Route>
 
         {/* Private routes: require auth */}
@@ -37,6 +40,7 @@ const App = () => {
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/student/topics" element={<StudentTopics />} />
           <Route path="/student/reports" element={<StudentReports />} />
+          <Route path="/student/report-check" element={<StudentReportCheck />} />
           <Route path="/student/schedule" element={<StudentSchedule />} />
           <Route path="/admin/dashboard" element={<Dashboard />} />
           <Route path="/professor/dashboard" element={<ProfessorDash />} />

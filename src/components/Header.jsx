@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -32,6 +33,7 @@ const Header = () => {
             <a href="/register">
               <button className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">S'inscrire</button>
             </a>
+            
             <button className="md:hidden text-gray-700" onClick={() => setMobileMenuOpen(true)}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -61,6 +63,7 @@ const Header = () => {
             <a href="/register">
               <button className="mt-2 w-full py-3 px-4 bg-white border border-gray-300 text-gray-700 font-medium rounded-md">S'inscrire</button>
             </a>
+            
           </div>
         </div>
       )}

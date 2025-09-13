@@ -104,9 +104,9 @@ const StudentReports = () => {
                           </Select>
                         </div>
                         <div className='space-y-1'>
-                          <Label>File (optional)</Label>
-                          <Input type='file' onChange={e=>setUploadForm(f=>({...f,file:e.target.files?.[0]||null}))} />
-                          <p className='text-xs text-muted-foreground'>If you select a file it's stored; otherwise only metadata is saved.</p>
+                          <Label>File (PDF/DOCX optional)</Label>
+                          <Input type='file' accept='.pdf,.doc,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword' onChange={e=>setUploadForm(f=>({...f,file:e.target.files?.[0]||null}))} />
+                          <p className='text-xs text-muted-foreground'>Accepted: PDF or DOCX. If omitted only metadata is saved.</p>
                         </div>
                         <div className='flex justify-end gap-2'>
                           <Button type='button' variant='outline' onClick={()=>setUploadOpen(false)}>Cancel</Button>

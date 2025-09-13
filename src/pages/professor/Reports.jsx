@@ -180,9 +180,9 @@ const ProfessorReports = () => {
                     </div>
                     {/* Supervisor derived from topic assignment; field removed */}
                     <div className='space-y-1'>
-                      <Label>File (placeholder)</Label>
-                      <Input type='file' onChange={e=>setUploadForm(f=>({...f,file:e.target.files?.[0]||null}))} />
-                      <p className='text-xs text-muted-foreground'>Actual file storage not implemented yet.</p>
+                      <Label>File (PDF/DOCX optional)</Label>
+                      <Input type='file' accept='.pdf,.doc,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword' onChange={e=>setUploadForm(f=>({...f,file:e.target.files?.[0]||null}))} />
+                      <p className='text-xs text-muted-foreground'>Accepted: PDF or DOCX. Leave empty for metadata only.</p>
                     </div>
                     <div className='flex justify-end gap-2'>
                       <Button type='button' variant='outline' onClick={()=>setUploadOpen(false)}>Cancel</Button>

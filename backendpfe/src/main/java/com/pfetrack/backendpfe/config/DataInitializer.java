@@ -26,9 +26,9 @@ public class DataInitializer {
         return args -> {
             if (studentRepo.count() == 0) {
                 studentRepo.save(Student.builder()
-                        .firstName("Alice")
-                        .lastName("Student")
-                        .email("student@example.com")
+                        .firstName("Abdellah")
+                        .lastName("Aissane")
+                        .email("abdobyaiss004@gmail.com")
                         .password(encoder.encode("password"))
                         .build());
             }

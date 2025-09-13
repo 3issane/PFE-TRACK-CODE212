@@ -1,4 +1,26 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+
 # Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store# Logs
 logs
 *.log
 npm-debug.log*

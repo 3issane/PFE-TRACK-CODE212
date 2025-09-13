@@ -1,5 +1,6 @@
 import React from 'react';
 import Header from '../components/Header';
+import { ThemeToggle } from '@/components/theme-toggle';
 import Hero from '../components/Hero';
 import About from '../components/About';
 import Features from '../components/Features';
@@ -11,7 +12,7 @@ import Footer from '../components/Footer';
 
 const Landing = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
       <Header />
       <main>
         <Hero />
