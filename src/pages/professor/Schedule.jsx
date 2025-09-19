@@ -325,7 +325,7 @@ export default function ProfessorSchedule() {
                     <SelectContent>
                       {studentTopics.map(st => (
                         <SelectItem key={st.studentTopicId} value={String(st.studentTopicId)}>
-                          {st.topicTitle} (Student #{st.studentId})
+                          {st.topicTitle} (Student #{st.studentName || st.studentId})
                         </SelectItem>
                       ))}
                     </SelectContent>

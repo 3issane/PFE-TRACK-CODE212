@@ -9,9 +9,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useEffect, useState } from "react"
-import { Mail } from "lucide-react"
-import { GoogleIcon } from "@/components/icons/google-icon"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 export function LoginForm({
@@ -22,6 +20,7 @@ export function LoginForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [googleReady, setGoogleReady] = useState(false)
+  const googleBtnRef = useRef<HTMLDivElement | null>(null)
 
   const API_BASE = (import.meta as any).env?.VITE_API_URL || "http://localhost:8080"
   const [googleClientId, setGoogleClientId] = useState<string>((import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "")
@@ -60,9 +59,40 @@ export function LoginForm({
   client_id: googleClientId,
       callback: handleGoogleCredential,
     auto_select: false,
-    // Disable FedCM prompt path for now to avoid CORS / experimental issues during local dev
-    use_fedcm_for_prompt: false,
     })
+    // Render the official Google button
+    try {
+      const isDark = document.documentElement.classList.contains('dark')
+      // @ts-ignore
+      window.google.accounts.id.renderButton(
+        googleBtnRef.current,
+        {
+          type: "standard",
+          theme: isDark ? "filled_black" : "outline",
+          size: "large",
+          text: "signin_with",
+          shape: "pill",
+          logo_alignment: "left",
+          width: 250
+        }
+      )
+      // Adjust styling for dark mode compatibility
+      setTimeout(() => {
+        const container = googleBtnRef.current
+        const iframe = container?.querySelector('iframe') as HTMLIFrameElement | null
+        if (iframe && container) {
+          iframe.style.border = 'none'
+          iframe.style.outline = 'none'
+          ;(iframe.style as any).boxShadow = 'none'
+          
+          // Fix for dark mode
+          if (isDark) {
+            iframe.style.backgroundColor = 'transparent'
+            container.style.backgroundColor = 'transparent'
+          }
+        }
+      }, 50)
+    } catch (_) {}
     setGoogleReady(true)
   }
 
@@ -71,7 +101,7 @@ export function LoginForm({
       setError(null)
       const idToken = response.credential
       const res = await fetch(`${API_BASE}/api/auth/google`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken }) })
-      if (!res.ok) throw new Error(await res.text() || "Google login failed")
+  if (!res.ok) throw new Error(await res.text() || "Échec de connexion Google")
       const data = await res.json()
       localStorage.setItem("authToken", data.token)
       localStorage.setItem("role", data.role)
@@ -81,24 +111,11 @@ export function LoginForm({
       else if (data.role === "ADMIN") navigate("/admin/dashboard")
       else if (data.role === "PROFESSOR") navigate("/professor/dashboard")
     } catch (e: any) {
-      setError(e.message || "Google login failed")
+      setError(e.message || "Échec de connexion Google")
     }
   }
 
-  function startGoogleLogin() {
-    setError(null)
-    // @ts-ignore
-    if (window.google?.accounts?.id) {
-      try {
-        // @ts-ignore
-        window.google.accounts.id.prompt()
-      } catch (e) {
-        setError("Google prompt failed")
-      }
-    } else {
-      setError("Google not ready")
-    }
-  }
+  // No explicit prompt; the official button handles showing the chooser
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -116,7 +133,7 @@ export function LoginForm({
       })
       if (!res.ok) {
         const msg = await res.text()
-        throw new Error(msg || `Login failed (${res.status})`)
+  throw new Error(msg || `Échec de connexion (${res.status})`)
       }
       const data = (await res.json()) as { token: string; role: "STUDENT" | "ADMIN" | "PROFESSOR"; id?: number; name?: string }
       // store token (simple localStorage; replace with a more secure store if needed)
@@ -129,7 +146,7 @@ export function LoginForm({
   else if (data.role === "ADMIN") navigate("/admin/dashboard")
   else if (data.role === "PROFESSOR") navigate("/professor/dashboard")
     } catch (err: any) {
-      setError(err?.message || "Login failed")
+  setError(err?.message || "Échec de connexion")
     } finally {
       setLoading(false)
     }
@@ -138,8 +155,8 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
-          <CardDescription>Enter your email below to login to your account</CardDescription>
+          <CardTitle>Connectez-vous à votre compte</CardTitle>
+          <CardDescription>Entrez votre email ci-dessous pour vous connecter</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -150,47 +167,51 @@ export function LoginForm({
           <form onSubmit={handleSubmit} noValidate>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">E-mail</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="moi@exemple.com"
                   required
                 />
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Mot de passe</Label>
                   <a
                     href="/forgot-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
-                    Forgot your password?
+                    Mot de passe oublié ?
                   </a>
                 </div>
                 <Input id="password" name="password" type="password" required />
               </div>
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Logging in..." : "Login"}
+                  {loading ? "Connexion..." : "Se connecter"}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full gap-2"
-                  disabled={!googleClientId || !googleReady}
-                  onClick={startGoogleLogin}
-                >
-                  <GoogleIcon className="h-4 w-4" />
-                  {!googleClientId ? "Chargement..." : (googleReady ? "Continuer avec Google" : "Initialisation...")}
-                </Button>
+                <div className="flex justify-center mt-2">
+                  <div
+                    ref={googleBtnRef}
+                    className="inline-flex google-button-container"
+                    style={{ 
+                      lineHeight: 0, 
+                      background: 'transparent',
+                      padding: 0,
+                      margin: 0,
+                      overflow: 'hidden',
+                      borderRadius: '20px'
+                    }}
+                  />
+                </div>
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
+              Vous n&apos;avez pas de compte ?{" "}
               <a href="/register" className="underline underline-offset-4">
-                Sign up
+                Créer un compte
               </a>
             </div>
           </form>

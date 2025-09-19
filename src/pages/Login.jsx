@@ -11,7 +11,7 @@ const Login = () => {
       <div className="absolute top-4 left-4">
         <Button variant="ghost" size="sm" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))} className="gap-1 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
-          <span className="text-xs font-medium">Go back</span>
+          <span className="text-xs font-medium">Retour</span>
         </Button>
       </div>
       <LoginForm className="w-full max-w-md" />

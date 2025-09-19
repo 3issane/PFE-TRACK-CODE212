@@ -1,0 +1,20 @@
+/* Google Button Dark Mode Fix */
+.google-button-container {
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.google-button-container iframe {
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Make sure dark mode has proper transparency */
+html.dark .google-button-container,
+html.dark .google-button-container iframe {
+  background-color: transparent !important;
+}

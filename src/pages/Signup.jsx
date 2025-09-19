@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ export default function Signup() {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [googleReady, setGoogleReady] = useState(false)
+  const googleBtnRef = useRef(null)
   const API_BASE = import.meta.env?.VITE_API_URL || "http://localhost:8080"
   const [googleClientId, setGoogleClientId] = useState("")
 
@@ -50,6 +51,37 @@ export default function Signup() {
       callback: handleGoogleCredential,
       auto_select: false,
     })
+    try {
+      const isDark = document.documentElement.classList.contains('dark')
+      // @ts-ignore
+      window.google.accounts.id.renderButton(
+        googleBtnRef.current,
+        {
+          type: "standard",
+          theme: isDark ? "filled_black" : "outline",
+          size: "large",
+          text: "signup_with",
+          shape: "pill",
+          logo_alignment: "left",
+          width: 250
+        }
+      )
+      setTimeout(() => {
+        const container = googleBtnRef.current
+        const iframe = container?.querySelector('iframe')
+        if (iframe && container) {
+          iframe.style.border = 'none'
+          iframe.style.outline = 'none'
+          iframe.style.boxShadow = 'none'
+          
+          // Fix for dark mode
+          if (isDark) {
+            iframe.style.backgroundColor = 'transparent'
+            container.style.backgroundColor = 'transparent'
+          }
+        }
+      }, 50)
+    } catch (_) {}
     setGoogleReady(true)
   }
 
@@ -72,20 +104,7 @@ export default function Signup() {
     }
   }
 
-  function startGoogleLogin() {
-    setError(null)
-    // @ts-ignore
-    if (window.google?.accounts?.id) {
-      try {
-        // @ts-ignore
-        window.google.accounts.id.prompt()
-      } catch (e) {
-        setError("Google prompt failed")
-      }
-    } else {
-      setError("Google non prêt")
-    }
-  }
+  // No explicit prompt; official button will open the account chooser
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -163,16 +182,20 @@ export default function Signup() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Inscription..." : "S'inscrire"}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full gap-2"
-              disabled={!googleClientId || !googleReady}
-              onClick={startGoogleLogin}
-            >
-              <GoogleIcon className="h-4 w-4" />
-              {!googleClientId ? "Chargement..." : (googleReady ? "Continuer avec Google" : "Initialisation...")}
-            </Button>
+            <div className="flex justify-center mt-2">
+              <div 
+                ref={googleBtnRef}
+                className="inline-flex google-button-container"
+                style={{ 
+                  lineHeight: 0, 
+                  background: 'transparent',
+                  padding: 0,
+                  margin: 0,
+                  overflow: 'hidden',
+                  borderRadius: '20px'
+                }}
+              />
+            </div>
             <div className="text-center text-sm">
               Déjà inscrit ? {" "}
               <a href="/login" className="underline underline-offset-4">
